@@ -61,3 +61,18 @@ Evento (on: push) --> Filtro (branches: master) --> Ambiente (run-on: ubuntu) --
 repo public free
 
 repo private deve ser usado 2000m/mês
+
+```yml
+name: ci-golang-workflow
+on: [push]
+jobs:
+  check-application:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.15
+      - run: go test
+      - run: go run math.go
+```
