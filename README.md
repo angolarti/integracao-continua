@@ -76,3 +76,77 @@ jobs:
       - run: go test
       - run: go run math.go
 ```
+
+##### Build docker image com github
+
+```yaml
+name: ci-golang-workflow
+on:
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  check-application:
+    runs-on: ubuntu-latest
+    #strategy:
+    #  matrix:
+    #    go: [ '1.14', '1.15' ]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.15
+      - run: go test
+      - run: go run math.go
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up DockerBuildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        id: docker_build # podemos pegar o resultado e usar em uma outra step usando id
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: angolar/fc2-ci-go:latest
+```
+
+#### Code Quality and Security
+
+##### Sonarqube
+
+- Rules: determinam o que é certo e errado em determinada linguagem de programação
+
+```bash
+sonar-scanner \
+  -Dsonar.projectKey=go-project \
+  -Dsonar.sources=. \
+  -Dsonar.host.url=http://localhost:9000 \
+  -Dsonar.login=6e30d369a96f040961d512d1069a20bed0a7a297
+```
+
+run non-root user
+
+```bash
+docker run \
+    --rm \
+    --user="$(id -u):$(id -g)" \
+    -e SONAR_HOST_URL="http://${SONARQUBE_URL}"  \
+    -v "${YOUR_REPO}:/usr/src" \
+    sonarsource/sonar-scanner-cli
+```
+
+Gerar file coverage from golang
+
+```bash
+go test --coverprofile=coverage.out
+```
